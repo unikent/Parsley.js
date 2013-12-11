@@ -587,6 +587,11 @@
       // bind some html5 properties
       this.bindHtml5Constraints();
 
+      // bind some WAI-ARIA properties
+      if(this.options.waiAria){
+        this.bindWaiAriaConstraints();
+      }
+
       // bind validators to field
       this.addConstraints();
 
@@ -640,6 +645,19 @@
           this.options.regexp = this.$element.attr( 'pattern' );
       }
 
+    }
+
+    /**
+    * Bind any WAI-ARIA constraints
+    *
+    * @private
+    * @method bindWaiAriaConstraints
+    */
+    , bindWaiAriaConstraints: function () {
+      // add html5 required support + class required support
+      if ( this.$element.attr( 'aria-required' ) ) {
+        this.options.required = true;
+      }
     }
 
     /**
@@ -1011,6 +1029,10 @@
         this.UI.removeErrors();
         this.UI.errorClassHandler.removeClass( this.options.errorClass ).addClass( this.options.successClass );
 
+        if( this.options.waiAria ){
+          this.UI.errorClassHandler.attr( 'aria-invalid', false );
+        }
+
         return true;
       } else if ( false === this.valid ) {
         if ( true === this.options.priorityEnabled ) {
@@ -1030,6 +1052,11 @@
         }
 
         this.UI.errorClassHandler.removeClass( this.options.successClass ).addClass( this.options.errorClass );
+
+        if( this.options.waiAria ){
+          this.UI.errorClassHandler.attr( 'aria-invalid', true );
+        }
+
         return false;
       }
 
@@ -1529,6 +1556,7 @@
     , errorClass: 'parsley-error'               // Class name on each invalid input
     , errorMessage: false                       // Customize an unique error message showed if one constraint fails
     , validators: {}                            // Add your custom validators functions
+    , waiAria: true                             // Whether to include WAI-ARIA support
     , showErrors: true                          // Set to false if you don't want Parsley to display error messages
     , messages: {}                              // Add your own error messages here
 
