@@ -424,7 +424,8 @@
     * Remove li / ul error
     *
     * @method removeError
-    * @param {String} constraintName Method Name
+    * @param  {String} constraintName Method Name
+    * @return ParsleyUI
     */
     , removeError: function ( constraintName ) {
       var liError = this.ulError + ' .' + constraintName
@@ -436,13 +437,16 @@
         if ( that.ulError && $( that.ulError ).children().length === 0 ) {
           that.removeErrors();
         } } ) : $( liError ).remove();
+
+        return this;
     }
 
     /**
     * Add li error
     *
     * @method addError
-    * @param {Object} { minlength: "error message for minlength constraint" }
+    * @param  {Object} { minlength: "error message for minlength constraint" }
+    * @return ParsleyUI
     */
     , addError: function ( error ) {
       for ( var constraint in error ) {
@@ -450,21 +454,44 @@
 
         $( this.ulError ).append( this.options.animate ? $( liTemplate ).html( error[ constraint ] ).hide().fadeIn( this.options.animateDuration ) : $( liTemplate ).html( error[ constraint ] ) );
       }
+
+      return this;
+    }
+
+    /**
+    * Update existing error if text has changed
+    *
+    * @method updateError
+    * @param  {Object} { minlength: "error message for minlength constraint" }
+    * @return ParsleyUI
+    */
+    , updateError: function ( error ) {
+      for ( var constraint in error ) {
+        if ( error[ constraint ] !==  $( this.ulError +  " > li." + constraint ).html() ) {
+          this.removeError( constraint ).addError( error );
+        }
+      }
+
+      return this;
     }
 
     /**
     * Remove all ul / li errors
     *
     * @method removeErrors
+    * @return ParsleyUI
     */
     , removeErrors: function () {
       this.options.animate ? $( this.ulError ).fadeOut( this.options.animateDuration, function () { $( this ).remove(); } ) : $( this.ulError ).remove();
+
+      return this;
     }
 
     /**
     * Remove ul errors and parsley error or success classes
     *
     * @method reset
+    * @return ParsleyUI
     */
     , reset: function () {
       this.ParsleyInstance.valid = null;
@@ -483,7 +510,8 @@
     * Add li / ul errors messages
     *
     * @method manageError
-    * @param {Object} constraint
+    * @param  {Object} constraint
+    * @return ParsleyUI
     */
     , manageError: function ( constraint ) {
       // display ulError container if it has been removed previously (or never shown)
@@ -494,11 +522,13 @@
       // TODO: refacto properly
       // if required constraint but field is not null, do not display
       if ( 'required' === constraint.name && null !== this.ParsleyInstance.getVal() && this.ParsleyInstance.getVal().length > 0 ) {
-        return;
+        return this;
+
       // if empty required field and non required constraint fails, do not display
       } else if ( this.ParsleyInstance.isRequired && 'required' !== constraint.name && ( null === this.ParsleyInstance.getVal() || 0 === this.ParsleyInstance.getVal().length ) ) {
         this.removeError( constraint.name );
-        return;
+
+        return this;
       }
 
       // TODO: refacto error name w/ proper & readable function
@@ -509,17 +539,19 @@
             this.ParsleyInstance.Validator.messages[ constraintName ][ constraint.requirements ] : ( 'undefined' === typeof this.ParsleyInstance.Validator.messages[ constraintName ] ?
               this.ParsleyInstance.Validator.messages.defaultMessage : this.ParsleyInstance.Validator.formatMesssage( this.ParsleyInstance.Validator.messages[ constraintName ], constraint.requirements ) ) );
 
-      // add liError if not shown. Do not add more than once custom errorMessage if exist
-      if ( !$( this.ulError + ' .' + liClass ).length ) {
-        liError[ liClass ] = message;
-        this.addError( liError );
-      }
+      liError[ liClass ] = message;
+
+      // add liError if not shown. update if already exist
+      !$( this.ulError + ' .' + liClass ).length ? this.addError( liError ) : this.updateError( liError );
+
+      return this;
     }
 
     /**
     * Create ul error container
     *
     * @method manageErrorContainer
+    * @return ParsleyUI
     */
     , manageErrorContainer: function () {
       var errorContainer = this.options.errorContainer || this.options.errors.container( this.ParsleyInstance.element, this.ParsleyInstance.isRadioOrCheckbox )
@@ -531,6 +563,8 @@
       }
 
       !this.ParsleyInstance.isRadioOrCheckbox ? this.ParsleyInstance.$element.after( ulTemplate ) : this.ParsleyInstance.$element.parent().after( ulTemplate );
+
+      return this;
     }
   };
 
@@ -585,7 +619,9 @@
       this.UI = new ParsleyUI( this );
 
       // bind some html5 properties
-      this.bindHtml5Constraints();
+      if ( this.options.useHtml5Constraints ) {
+        this.bindHtml5Constraints();
+      }
 
       // bind some WAI-ARIA properties
       if(this.options.waiAria){
@@ -729,7 +765,10 @@
       this.constraints[ constraint.name ] = $.extend( true, this.constraints[ constraint.name ], constraint );
 
       if ( 'string' === typeof message ) {
-        this.Validator.messages[ constraint.name ] = message ;
+        if ( constraint.name ===  'type' )
+          this.Validator.messages[ constraint.name ][ constraint.requirements ] = message ;
+        else
+          this.Validator.messages[ constraint.name ] = message ;
       }
 
       // force field validation next check and reset validation events
@@ -881,9 +920,8 @@
      * @method getLength
      * @return {int} The length of the value
      */
-    , getLength: function(val) {
-      if (!val || !val.hasOwnProperty('length')) return 0;
-      return val.length;
+    , getLength: function ( val ) {
+      return !val || !val.hasOwnProperty( 'length' ) ? 0 : val.length;
     }
 
     /**
@@ -1124,7 +1162,7 @@
       this.$element = $( element );
       this.group = options.group || false;
       this.hash = this.getName();
-      this.siblings = this.group ? '[parsley-group="' + this.group + '"]' : 'input[name="' + this.$element.attr( 'name' ) + '"]';
+      this.siblings = this.group ? '[' + options.namespace + 'group="' + this.group + '"]' : 'input[name="' + this.$element.attr( 'name' ) + '"]';
       this.isRadioOrCheckbox = true;
       this.isRadio = this.$element.is( 'input[type=radio]' );
       this.isCheckbox = this.$element.is( 'input[type=checkbox]' );
@@ -1164,7 +1202,7 @@
        throw "A radio / checkbox input must have a parsley-group attribute or a name to be Parsley validated !";
      }
 
-     return 'parsley-' + this.$element.attr( 'name' ).replace( /(:|\.|\[|\])/g, '' );
+     return 'parsley-' + this.$element.attr( 'name' ).replace( /(:|\.|\[|\]|\$)/g, '' );
    }
 
    /**
@@ -1273,10 +1311,6 @@
     * @param elem
     */
     , addItem: function ( elem ) {
-      if ( $( elem ).is( this.options.excluded ) ) {
-        return false;
-      }
-
       var ParsleyField = $( elem ).parsley( this.options );
       ParsleyField.setParent( this );
 
@@ -1485,8 +1519,8 @@
 
     for ( var i in this[ 0 ].attributes ) {
       attribute = this[ 0 ].attributes[ i ];
-      
-      if ( null !== attribute && attribute.specified && regex.test( attribute.name ) ) {
+      if ( 'undefined' !== typeof attribute && null !== attribute && attribute.specified && regex.test( attribute.name ) ) {
+
         obj[ camelize( attribute.name.replace( namespace, '' ) ) ] = deserializeValue( attribute.value );
       }
     }
@@ -1559,6 +1593,7 @@
     , validators: {}                            // Add your custom validators functions
     , waiAria: true                             // Whether to include WAI-ARIA support
     , showErrors: true                          // Set to false if you don't want Parsley to display error messages
+    , useHtml5Constraints: true                 // Set to false if you don't want Parsley to use html5 constraints
     , messages: {}                              // Add your own error messages here
 
     //some quite advanced configuration here..
