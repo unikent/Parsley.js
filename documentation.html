@@ -1506,11 +1506,11 @@ parsley-error-message="You must enter a 10 characters alphanumeric value"</code>
         $( '#demo-form' ).parsley( { listeners: {
             onFormValidate: function ( isFormValid, event ) {
                 if ( isFormValid && !$( '#good-to-go').length ) {
-                    $( '#demo-form-valid' ).after( '<span id="good-to-go" style="display:block;margin-top:5px;" class="alert alert-success">Yay, good to go!</span>' );
+                    $( '#demo-form-valid' ).after( '<span id="good-to-go" style="display:block;margin-top:5px;" class="alert alert-success">Good to go!</span>' );
                     $( '#demo-form-valid' ).hide();
                     $( '#not-good-to-go' ).hide();
                 } else if ( !isFormValid && !$( '#not-good-to-go').length ) {
-                    $( '#demo-form-valid' ).after( '<span id="not-good-to-go" style="display:block;margin-top:5px;" class="alert alert-error">Oops! Seems there are some errors..</span>' );
+                    $( '#demo-form-valid' ).after( '<span id="not-good-to-go" style="display:block;margin-top:5px;" class="alert alert-error">Seems there are some errors..</span>' );
                 }
             },
             onFieldError: function ( field, constraint ) {
